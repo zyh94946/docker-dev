@@ -4,7 +4,9 @@ RUN /bin/echo -e "deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted u
 
 RUN apt-get remove binutils -y
 
+# 安装编译所需库
 RUN apt-get update && apt-get install -y --force-yes \
+        wget \
         build-essential \
         libfreetype6-dev \
         libpng-dev \
@@ -16,16 +18,19 @@ RUN apt-get update && apt-get install -y --force-yes \
         libmcrypt-dev \
         libreadline-dev \
         libxml2-dev \
+        libxslt-dev \
+        libcurl3 \
+        librabbitmq-dev \
+        libmemcached-dev \
     && docker-php-ext-install -j$(nproc) gd
-
 RUN /bin/bash -c 'ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h'
 
+# 安装php源码自带扩展
 RUN docker-php-ext-install -j$(nproc) bcmath \
     && docker-php-ext-install -j$(nproc) bz2 \
     && docker-php-ext-install -j$(nproc) calendar \
     && docker-php-ext-install -j$(nproc) exif \
     && docker-php-ext-install -j$(nproc) gettext \
-#    && docker-php-ext-configure gmp --with-gmp=/usr/include/x86_64-linux-gnu/gmp.h \
     && docker-php-ext-install -j$(nproc) gmp \
     && docker-php-ext-configure imap --with-kerberos --with-imap-ssl \
     && docker-php-ext-install -j$(nproc) imap \
@@ -33,14 +38,10 @@ RUN docker-php-ext-install -j$(nproc) bcmath \
     && docker-php-ext-install -j$(nproc) mysql \
     && docker-php-ext-install -j$(nproc) mysqli \
     && docker-php-ext-install -j$(nproc) pcntl \
-    && docker-php-ext-install -j$(nproc) pdo \
     && docker-php-ext-install -j$(nproc) pdo_mysql \
-#    && docker-php-ext-install -j$(nproc) phar \
     && docker-php-ext-install -j$(nproc) shmop \
-    && docker-php-ext-install -j$(nproc) simplexml \
     && docker-php-ext-install -j$(nproc) soap \
     && docker-php-ext-install -j$(nproc) sockets \
-    && docker-php-ext-install -j$(nproc) spl \
     && docker-php-ext-install -j$(nproc) sysvmsg \
     && docker-php-ext-install -j$(nproc) sysvsem \
     && docker-php-ext-install -j$(nproc) sysvshm \
@@ -49,10 +50,9 @@ RUN docker-php-ext-install -j$(nproc) bcmath \
     && docker-php-ext-install -j$(nproc) xsl \
     && docker-php-ext-install -j$(nproc) zip
 
-RUN apt-get install librabbitmq-dev -y --force-yes
-
 RUN pecl channel-update pecl.php.net
 
+# 从pecl安装扩展
 RUN pecl install mongo-1.6.13 \
     && pecl install redis-2.2.8 \
     && pecl install swoole-1.9.0 \
@@ -63,12 +63,24 @@ RUN pecl install mongo-1.6.13 \
     && pecl install memcached-2.2.0 \
     && pecl install msgpack-0.5.7 \
     && pecl install mysqlnd_ms-1.5.2 \
-    && pecl install sphinx-1.3.3 \
-    && pecl install yar-1.2.5 \
-    && docker-php-ext-enable mongo redis swoole amqp apcu igbinary memcache memcached msgpack mysqlnd_ms sphinx yar
+    && docker-php-ext-enable mongo redis swoole amqp apcu igbinary memcache memcached msgpack mysqlnd_ms
 
-#RUN docker-php-source extract; \
-#    cd /usr/src/php/ext; \
-#
-#    && docker-php-source delete
+# 安装sphinx所需libsphinxclient
+RUN /bin/bash -c 'wget http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz' \
+    && tar -zxvf sphinx-2.2.11-release.tar.gz \
+    && (\
+        cd sphinx-2.2.11-release/api/libsphinxclient \
+        && ./configure \
+        && make \
+        && make install \
+    )
 
+RUN pecl install sphinx-1.3.3 \
+    && docker-php-ext-enable sphinx
+
+RUN apt-get install curl -y --force-yes
+RUN apt-get install libcurl4-gnutls-dev -y --force-yes
+RUN cd /usr/include && ln -s x86_64-linux-gnu/curl
+RUN apt-get install libcurl-openssl1.0-dev libcurl3/bionic -y --force-yes
+RUN pecl install yar-1.2.5 \
+    && docker-php-ext-enable yar
