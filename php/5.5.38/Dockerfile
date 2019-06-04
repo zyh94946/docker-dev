@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --force-yes \
         libcurl3 \
         librabbitmq-dev \
         libmemcached-dev \
+        libtidy-dev \
     && docker-php-ext-install -j$(nproc) gd
 RUN /bin/bash -c 'ln -s /usr/include/x86_64-linux-gnu/gmp.h /usr/include/gmp.h'
 
@@ -48,7 +49,8 @@ RUN docker-php-ext-install -j$(nproc) bcmath \
     && docker-php-ext-install -j$(nproc) wddx \
     && docker-php-ext-install -j$(nproc) xmlrpc \
     && docker-php-ext-install -j$(nproc) xsl \
-    && docker-php-ext-install -j$(nproc) zip
+    && docker-php-ext-install -j$(nproc) zip \
+    && docker-php-ext-install -j$(nproc) tidy
 
 RUN pecl channel-update pecl.php.net
 
@@ -68,11 +70,13 @@ RUN pecl install mongo-1.6.13 \
 # 安装sphinx所需libsphinxclient
 RUN /bin/bash -c 'wget http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz' \
     && tar -zxvf sphinx-2.2.11-release.tar.gz \
+    && rm -rf sphinx-2.2.11-release.tar.gz \
     && (\
         cd sphinx-2.2.11-release/api/libsphinxclient \
         && ./configure \
         && make \
         && make install \
+        && rm -rf sphinx-2.2.11-release \
     )
 
 RUN pecl install sphinx-1.3.3 \
@@ -84,3 +88,4 @@ RUN cd /usr/include && ln -s x86_64-linux-gnu/curl
 RUN apt-get install libcurl-openssl1.0-dev libcurl3/bionic -y --force-yes
 RUN pecl install yar-1.2.5 \
     && docker-php-ext-enable yar
+
