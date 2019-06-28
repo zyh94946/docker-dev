@@ -56,7 +56,6 @@ RUN pecl channel-update pecl.php.net
 
 # 从pecl安装扩展
 RUN pecl install mongo-1.6.13 \
-    && pecl install redis-2.2.8 \
     && pecl install swoole-1.9.0 \
     && pecl install amqp-1.7.1 \
     && pecl install apcu-4.0.11 \
@@ -65,7 +64,7 @@ RUN pecl install mongo-1.6.13 \
     && pecl install memcached-2.2.0 \
     && pecl install msgpack-0.5.7 \
     && pecl install mysqlnd_ms-1.5.2 \
-    && docker-php-ext-enable mongo redis swoole amqp apcu igbinary memcache memcached msgpack mysqlnd_ms
+    && docker-php-ext-enable mongo swoole amqp apcu igbinary memcache memcached msgpack mysqlnd_ms
 
 # 安装sphinx所需libsphinxclient
 RUN /bin/bash -c 'wget http://sphinxsearch.com/files/sphinx-2.2.11-release.tar.gz' \
@@ -88,4 +87,29 @@ RUN cd /usr/include && ln -s x86_64-linux-gnu/curl
 RUN apt-get install libcurl-openssl1.0-dev libcurl3/bionic -y --force-yes
 RUN pecl install yar-1.2.5 \
     && docker-php-ext-enable yar
+
+RUN /bin/bash -c 'wget https://github.com/phpredis/phpredis/archive/2.2.8.tar.gz' \
+    && tar -zxvf 2.2.8.tar.gz \
+    && rm -rf 2.2.8.tar.gz \
+    && (\
+        cd phpredis-2.2.8 \
+        && phpize \
+        && ./configure --enable-redis-igbinary \
+        && make \
+        && make install \
+        && rm -rf phpredis-2.2.8 \
+    )
+
+# 自定义配置文件
+#COPY amqp.ini /usr/local/etc/php/conf.d/docker-php-ext-amqp.ini
+#COPY apcu.ini /usr/local/etc/php/conf.d/docker-php-ext-apcu.ini
+#COPY swoole.ini /usr/local/etc/php/conf.d/docker-php-ext-swoole.ini
+#COPY yar.ini /usr/local/etc/php/conf.d/docker-php-ext-yar.ini
+#COPY php.ini /usr/local/etc/php/
+#COPY php-fpm.conf /usr/local/etc/
+#COPY www.conf /usr/local/etc/php-fpm.d/
+
+
+
+
 
