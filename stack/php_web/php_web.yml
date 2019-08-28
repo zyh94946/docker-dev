@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   swoole_http:
-   image: php7.3.8_swoole4.4.4:latest
+   image: php7.3.8_swoole4.4.0:latest
    command: php /code/httpServ.php 8888
    volumes:
     - ${DOCKER_DEV_PATH}/test_code/php:/code
