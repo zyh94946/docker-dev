@@ -1,0 +1,22 @@
+version: '3.3'
+services:
+  server:
+    image: portainer/portainer
+    command: -H unix:///var/run/docker.sock
+    networks:
+      - traefik_proxy
+    deploy:
+      labels:
+        - traefik.enable=true
+        - traefik.backend=portainer
+        - traefik.frontend.rule=Host:console.cloud-labs.io
+        - traefik.docker.network=traefik_proxy
+        - traefik.port=9000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer:/data
+networks:
+  traefik_proxy:
+    external: true
+volumes:
+  portainer:

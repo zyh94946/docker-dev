@@ -1,0 +1,24 @@
+version: '3.3'
+services:
+  reverse-proxy:
+    image: traefik:1.7-alpine
+    command: --web --docker --docker.domain=cloud-labs.io --docker.watch --docker.swarmmode=true --loglevel=INFO --accesslog --accesslog.filepath=/logs/access.log --traefiklog --traefiklog.filepath=/logs/traefik.log
+    deploy:
+      mode: replicated
+      replicas: 1
+      labels:
+        - traefik.enable=true
+        - traefik.backend=traefik
+        - traefik.frontend.rule=Host:monitor.cloud-labs.io
+        - traefik.port=8080
+        - traefik.docker.network=traefik_proxy
+    networks:
+      - proxy
+    ports:
+      - 8081:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DOCKER_DEV_PATH}/logs/traefik:/logs
+      - /dev/null:/traefik.toml
+networks:
+  proxy:

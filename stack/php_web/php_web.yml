@@ -1,0 +1,26 @@
+version: '3.3'
+services:
+  swoole_http:
+   image: php7.3.8_swoole4.4.4:latest
+   command: php /code/httpServ.php 8888
+   volumes:
+    - ${DOCKER_DEV_PATH}/test_code/php:/code
+    - ${DOCKER_DEV_PATH}/logs/swoole:/data/logs/swoole
+   networks:
+     - traefik_proxy
+   deploy:
+     mode: replicated
+     replicas: 2
+     labels:
+        - traefik.backend=swoole_http
+        - traefik.frontend.passHostHeader=true
+        - traefik.frontend.rule=Host:domain.cloud-labs.io
+        - traefik.docker.network=traefik_proxy
+        - traefik.port=8888
+        - traefik.backend.healthcheck.hostname=domain.cloud-labs.io
+        - traefik.backend.healthcheck.port=8888
+        - traefik.backend.healthcheck.path=/healthcheck.php
+        - traefik.backend.healthcheck.interval=5s
+networks:
+  traefik_proxy:
+    external: true
